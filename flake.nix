@@ -13,6 +13,7 @@
       repositoryRev = packageVersion;
       repositoryRevHash = "sha256-AY5VVQEYcuvMZ0tskiOwPEIBHa1MgOKQ+QVI5Hz9pk4=";
       nodeModulesHash = "sha256-66fcn9dSozgcVl9pAOwmz1nqfsQgzcb4N+oJWEPe7gE=";
+      cargoHash = "sha256-MEG8OgmCm/XC8pY/taeGynmvcytyFET5aLPNYZE22zo=";
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -326,9 +327,8 @@
               version = packageVersion;
               src = source;
 
-              cargoLock = {
-                lockFile = "${finalAttrs.src}/Cargo.lock";
-              };
+              cargoHash = cargoHash;
+
               nativeBuildInputs = [
                 pkgs.pkg-config
                 pkgs.git
