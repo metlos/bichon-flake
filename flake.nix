@@ -8,6 +8,9 @@
   outputs =
     { self, nixpkgs }:
     let
+      repositoryRev = "0.3.0";
+      repositoryRevHash = "sha256-AY5VVQEYcuvMZ0tskiOwPEIBHa1MgOKQ+QVI5Hz9pk4=";
+      nodeModulesHash = "sha256-66fcn9dSozgcVl9pAOwmz1nqfsQgzcb4N+oJWEPe7gE=";
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -273,8 +276,8 @@
           source = pkgs.fetchFromGitHub {
             owner = "rustmailer";
             repo = "bichon";
-            rev = "97be76278e1e0cf4123dcab80347d61e02566f90";
-            hash = "sha256-cypjrL4iZKzu4yOlLbdNoP6Lh0cxR6eH/w+WxKcIibo=";
+            rev = repositoryRev;
+            hash = repositoryRevHash;
           };
         in
         {
@@ -292,14 +295,15 @@
 
                 nativeBuildInputs = [
                   pkgs.nodejs_22
-                  pkgs.pnpm_10.configHook
+                  pkgs.pnpm_10
+                  pkgs.pnpmConfigHook
                   pkgs.typescript
                 ];
 
-                pnpmDeps = pkgs.pnpm_10.fetchDeps {
+                pnpmDeps = pkgs.fetchPnpmDeps {
                   inherit (finalAttrs) pname version src;
                   fetcherVersion = 2;
-                  hash = "sha256-WfLC0zGShQgRg+KxT8GHxmpxwjhI00eEGifHoU+m+PI=";
+                  hash = nodeModulesHash;
                   sourceRoot = "${finalAttrs.src.name}/web";
                 };
 
