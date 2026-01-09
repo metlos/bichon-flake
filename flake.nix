@@ -8,6 +8,7 @@
   outputs =
     { self, nixpkgs }:
     let
+      packageName = "bichon";
       repositoryRev = "0.3.0";
       repositoryRevHash = "sha256-AY5VVQEYcuvMZ0tskiOwPEIBHa1MgOKQ+QVI5Hz9pk4=";
       nodeModulesHash = "sha256-66fcn9dSozgcVl9pAOwmz1nqfsQgzcb4N+oJWEPe7gE=";
@@ -64,14 +65,8 @@
                 Enable the bichon service.
               '';
 
-              package = lib.mkOption {
-                type = lib.types.package;
-                default = self.packages.${pkgs.stdenv.hostPlatform.system}.bichon;
-                description = ''
-                  The package to use.
-                '';
-              };
-
+              package = lib.mkPackageOption self.packages "${packageName}" { };
+                
               user = lib.mkOption {
                 type = lib.types.str;
                 default = "bichon";
@@ -270,7 +265,6 @@
       packages = forAllSystems (
         system:
         let
-          packageName = "bichon";
           pkgs = nixpkgs.legacyPackages.${system};
           lib = pkgs.lib;
           source = pkgs.fetchFromGitHub {
