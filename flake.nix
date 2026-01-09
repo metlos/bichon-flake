@@ -9,7 +9,8 @@
     { self, nixpkgs }:
     let
       packageName = "bichon";
-      repositoryRev = "0.3.0";
+      packageVersion = "0.3.0";
+      repositoryRev = packageVersion;
       repositoryRevHash = "sha256-AY5VVQEYcuvMZ0tskiOwPEIBHa1MgOKQ+QVI5Hz9pk4=";
       nodeModulesHash = "sha256-66fcn9dSozgcVl9pAOwmz1nqfsQgzcb4N+oJWEPe7gE=";
       supportedSystems = [
@@ -276,10 +277,9 @@
           "${packageName}" = pkgs.rustPlatform.buildRustPackage (
             finalAttrs:
             let
-              manifest = (lib.importTOML "${finalAttrs.src}/Cargo.toml").package;
               frontend = pkgs.stdenv.mkDerivation (finalAttrs: {
                 pname = "${packageName}-frontend";
-                version = manifest.version;
+                version = packageVersion;
 
                 src = source;
 
@@ -323,7 +323,7 @@
             in
             {
               pname = "${packageName}";
-              version = manifest.version;
+              version = packageVersion;
               src = source;
 
               cargoLock = {
