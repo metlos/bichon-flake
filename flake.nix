@@ -245,7 +245,7 @@
                   User = cfg.user;
                   Group = cfg.group;
                   Restart = "always";
-                  ExecStart = "${lib.getBin self.packages."${builtins.currentSystem}"."${packageName}"}/bin/bichon";
+                  ExecStart = "${lib.getBin self.packages."${pkgs.stdenv.hostPlatform.system}"."${packageName}"}/bin/bichon";
                   StateDirectory = lib.mkIf (cfg.db.rootDir == "/var/lib/bichon") "bichon";
                 };
               };
