@@ -65,8 +65,6 @@
                 Enable the bichon service.
               '';
 
-              package = lib.mkPackageOption self.packages "${packageName}" { };
-                
               user = lib.mkOption {
                 type = lib.types.str;
                 default = "bichon";
@@ -247,7 +245,7 @@
                   User = cfg.user;
                   Group = cfg.group;
                   Restart = "always";
-                  ExecStart = "${lib.getBin cfg.package}/bin/bichon";
+                  ExecStart = "${lib.getBin "${packageName}"}/bin/bichon";
                   StateDirectory = lib.mkIf (cfg.db.rootDir == "/var/lib/bichon") "bichon";
                 };
               };
