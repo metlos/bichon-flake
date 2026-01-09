@@ -11,7 +11,7 @@
       packageName = "bichon";
       packageVersion = "0.3.0";
       repositoryRev = packageVersion;
-      repositoryRevHash = "sha256-AY5VVQEYcuvMZ0tskiOwPEIBHa1MgOKQ+QVI5Hz9pk4=";
+      repositoryRevHash = "sha256-0rXBCKcs1PNMXap2cQh/o/xgVcf4LwW45PyjC40pI/Q=";
       nodeModulesHash = "sha256-66fcn9dSozgcVl9pAOwmz1nqfsQgzcb4N+oJWEPe7gE=";
       cargoHash = "sha256-MEG8OgmCm/XC8pY/taeGynmvcytyFET5aLPNYZE22zo=";
       supportedSystems = [
