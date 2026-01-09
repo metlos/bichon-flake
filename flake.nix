@@ -266,7 +266,6 @@
         system:
         let
           pkgs = nixpkgs.legacyPackages.${system};
-          lib = pkgs.lib;
           source = pkgs.fetchFromGitHub {
             owner = "rustmailer";
             repo = "bichon";
@@ -337,9 +336,9 @@
                 pkgs.openssl
               ];
               preBuild = ''
-                echo "moving the frontend code to the expected location"
-                mkdir -p "web/dist"
-                cp -r "${frontend}" web/dist
+                echo "moving the frontend code from '${frontend}/dist' to the expected location $(pwd)/web/dist"
+                mkdir -p web
+                cp -r "${frontend}/dist" web/dist
               '';
 
               # bichon doesn't have many tests yet and they're failing, too :)
