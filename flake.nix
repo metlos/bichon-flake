@@ -9,11 +9,11 @@
     { self, nixpkgs }:
     let
       packageName = "bichon";
-      packageVersion = "0.3.0";
+      packageVersion = "0.3.1";
       repositoryRev = packageVersion;
-      repositoryRevHash = "sha256-0rXBCKcs1PNMXap2cQh/o/xgVcf4LwW45PyjC40pI/Q=";
-      nodeModulesHash = "sha256-66fcn9dSozgcVl9pAOwmz1nqfsQgzcb4N+oJWEPe7gE=";
-      cargoHash = "sha256-MEG8OgmCm/XC8pY/taeGynmvcytyFET5aLPNYZE22zo=";
+      repositoryRevHash = "sha256-Bn8h3NBMjfzPpLhzipcSbdCAaF2oc0CGR3lm7cH6PVc="; # hash for bichon-x.y.z.drv
+      nodeModulesHash = "sha256-66fcn9dSozgcVl9pAOwmz1nqfsQgzcb4N+oJWEPe7gE="; # hash for bichon-frontend-x.y.z.drv
+      cargoHash = "sha256-X4/3s77qSPBOMt72ThO96siYZzqK1YGfYfcvJVaSDm4="; # hash for bichon-x.y.z-vendor.drv
       supportedSystems = [
         "x86_64-linux"
         "aarch64-linux"
