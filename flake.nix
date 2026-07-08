@@ -19,6 +19,122 @@
         "aarch64-linux"
       ];
       forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+
+      # `crossSystem` must use the canonical GNU triple (e.g.
+      # "aarch64-unknown-linux-gnu"), not the short nix system-double
+      # ("aarch64-linux") -- the short form normalizes to a
+      # differently-hashed platform than nixpkgs' well-known
+      # pkgsCross.aarch64-multiplatform and silently falls off the binary
+      # substitute cache.
+      mkPkgs =
+        system: crossSystem:
+        import nixpkgs (
+          { inherit system; }
+          // (if crossSystem == null then { } else { crossSystem = { config = crossSystem; }; })
+        );
+
+      # Builds the bichon package (and frontend) for a given `pkgs`. When
+      # `pkgs` is a real crossSystem instantiation (buildPlatform !=
+      # hostPlatform), build-time tools run natively on the build machine
+      # and only the final bichon binary targets hostPlatform -- no QEMU
+      # involved anywhere.
+      mkOutputs =
+        pkgs:
+        let
+          source = pkgs.fetchFromGitHub {
+            owner = "rustmailer";
+            repo = "bichon";
+            rev = repositoryRev;
+            hash = repositoryRevHash;
+          };
+          bichon = pkgs.rustPlatform.buildRustPackage (
+            finalAttrs:
+            let
+              frontend = pkgs.stdenv.mkDerivation (finalAttrs: {
+                pname = "${packageName}-frontend";
+                version = packageVersion;
+
+                src = source;
+
+                sourceRoot = "${finalAttrs.src.name}/web";
+
+                nativeBuildInputs = [
+                  pkgs.nodejs_22
+                  pkgs.pnpm_10
+                  pkgs.pnpmConfigHook
+                  pkgs.typescript
+                ];
+
+                # fetchPnpmDeps/pnpmConfigHook must actually run pnpm/node
+                # on the build machine; route through pkgsBuildHost so
+                # this doesn't resolve to a target-arch (cross-built)
+                # nodejs/pnpm under a crossSystem `pkgs`.
+                pnpmDeps = pkgs.pkgsBuildHost.fetchPnpmDeps {
+                  inherit (finalAttrs) pname version src;
+                  fetcherVersion = 2;
+                  hash = nodeModulesHash;
+                  sourceRoot = "${finalAttrs.src.name}/web";
+                };
+
+                patchPhase = ''
+                  export CI=true
+                '';
+
+                buildPhase = ''
+                  runHook preBuild
+
+                  pnpm build
+
+                  runHook postBuild
+                '';
+
+                installPhase = ''
+                  runHook preInstall
+
+                  mkdir -p $out;
+                  cp -r dist $out/;
+
+                  runHook postInstall
+                '';
+              });
+            in
+            {
+              pname = "${packageName}";
+              version = packageVersion;
+              src = source;
+
+              cargoHash = cargoHash;
+
+              nativeBuildInputs = [
+                pkgs.pkg-config
+                pkgs.git
+              ];
+              buildInputs = [
+                pkgs.openssl
+              ];
+              preBuild = ''
+                echo "moving the frontend code from '${frontend}/dist' to the expected location $(pwd)/web/dist"
+                mkdir -p web
+                cp -r "${frontend}/dist" web/dist
+              '';
+
+              # bichon doesn't have many tests yet and they're failing, too :)
+              doCheck = false;
+            }
+          );
+        in
+        {
+          "${packageName}" = bichon;
+          default = bichon;
+        };
+
+      perSystemPackages = forAllSystems (system: mkOutputs (mkPkgs system null));
+
+      # packages.aarch64-linux.bichon is built via a genuine cross `pkgs`
+      # (buildPlatform=x86_64-linux, hostPlatform=aarch64-linux) instead of
+      # a native aarch64 build -- see .claude/cross-build-notes.md in the
+      # consuming vps.nix flake for the full writeup of why.
+      aarch64Cross = mkOutputs (mkPkgs "x86_64-linux" "aarch64-unknown-linux-gnu");
     in
     {
       nixosModules = {
@@ -262,91 +378,6 @@
           };
       };
 
-      packages = forAllSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          source = pkgs.fetchFromGitHub {
-            owner = "rustmailer";
-            repo = "bichon";
-            rev = repositoryRev;
-            hash = repositoryRevHash;
-          };
-        in
-        {
-          "${packageName}" = pkgs.rustPlatform.buildRustPackage (
-            finalAttrs:
-            let
-              frontend = pkgs.stdenv.mkDerivation (finalAttrs: {
-                pname = "${packageName}-frontend";
-                version = packageVersion;
-
-                src = source;
-
-                sourceRoot = "${finalAttrs.src.name}/web";
-
-                nativeBuildInputs = [
-                  pkgs.nodejs_22
-                  pkgs.pnpm_10
-                  pkgs.pnpmConfigHook
-                  pkgs.typescript
-                ];
-
-                pnpmDeps = pkgs.fetchPnpmDeps {
-                  inherit (finalAttrs) pname version src;
-                  fetcherVersion = 2;
-                  hash = nodeModulesHash;
-                  sourceRoot = "${finalAttrs.src.name}/web";
-                };
-
-                patchPhase = ''
-                  export CI=true
-                '';
-
-                buildPhase = ''
-                  runHook preBuild
-
-                  pnpm build
-
-                  runHook postBuild
-                '';
-
-                installPhase = ''
-                  runHook preInstall
-
-                  mkdir -p $out;
-                  cp -r dist $out/;
-
-                  runHook postInstall
-                '';
-              });
-            in
-            {
-              pname = "${packageName}";
-              version = packageVersion;
-              src = source;
-
-              cargoHash = cargoHash;
-
-              nativeBuildInputs = [
-                pkgs.pkg-config
-                pkgs.git
-              ];
-              buildInputs = [
-                pkgs.openssl
-              ];
-              preBuild = ''
-                echo "moving the frontend code from '${frontend}/dist' to the expected location $(pwd)/web/dist"
-                mkdir -p web
-                cp -r "${frontend}/dist" web/dist
-              '';
-
-              # bichon doesn't have many tests yet and they're failing, too :)
-              doCheck = false;
-            }
-          );
-          default = self.packages.${system}.${packageName};
-        }
-      );
+      packages = perSystemPackages // { aarch64-linux = aarch64Cross; };
     };
 }
